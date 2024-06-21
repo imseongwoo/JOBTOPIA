@@ -134,7 +134,7 @@ class PostServiceImpl(
 
     override fun getFollowingUserPostList(pageable: Pageable, userId: Long): Page<GetPostResponse> {
         val followingResult = followRepository.findAllByUserId(userId)
-        val result = postRepository.findAllByManyUserId(followingResult.map { it.followingUserId }, pageable)
+        val result = postRepository.getFollowingUserPosts(followingResult.map { it.followingUserId }, pageable)
 
         return result.map { GetPostResponse.from(it) }
     }
