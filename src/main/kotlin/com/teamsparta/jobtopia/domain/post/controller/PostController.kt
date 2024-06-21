@@ -3,6 +3,7 @@ package com.teamsparta.jobtopia.domain.post.controller
 import com.teamsparta.jobtopia.domain.post.dto.GetPostResponse
 import com.teamsparta.jobtopia.domain.post.dto.PostRequest
 import com.teamsparta.jobtopia.domain.post.dto.PostResponse
+import com.teamsparta.jobtopia.domain.post.dto.PostSearchRequest
 import com.teamsparta.jobtopia.domain.post.service.PostService
 import com.teamsparta.jobtopia.infra.s3.service.S3Service
 import com.teamsparta.jobtopia.infra.security.UserPrincipal
@@ -103,5 +104,15 @@ class PostController(
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(followPostList.content)
+    }
+
+    @GetMapping("/keyword")
+    fun getPostListByKeyword(
+        @PageableDefault pageable: Pageable,
+        postSearchRequest: PostSearchRequest?
+    ):ResponseEntity<Page<GetPostResponse>>{
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(postService.getPostListByKeyword(pageable, postSearchRequest))
     }
 }

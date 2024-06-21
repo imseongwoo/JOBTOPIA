@@ -6,6 +6,7 @@ import com.teamsparta.jobtopia.domain.follow.repository.FollowRepository
 import com.teamsparta.jobtopia.domain.post.dto.GetPostResponse
 import com.teamsparta.jobtopia.domain.post.dto.PostRequest
 import com.teamsparta.jobtopia.domain.post.dto.PostResponse
+import com.teamsparta.jobtopia.domain.post.dto.PostSearchRequest
 import com.teamsparta.jobtopia.domain.post.model.Post
 import com.teamsparta.jobtopia.domain.post.model.toResponse
 import com.teamsparta.jobtopia.domain.post.repository.PostRepository
@@ -136,6 +137,11 @@ class PostServiceImpl(
         val followingResult = followRepository.findAllByUserId(userId)
         val result = postRepository.getFollowingUserPosts(followingResult.map { it.followingUserId }, pageable)
 
+        return result.map { GetPostResponse.from(it) }
+    }
+
+    override fun getPostListByKeyword(pageable: Pageable, postSearchRequest: PostSearchRequest?): Page<GetPostResponse> {
+        val result = postRepository.searchPostsByKeyword(postSearchRequest, pageable)
         return result.map { GetPostResponse.from(it) }
     }
 }
