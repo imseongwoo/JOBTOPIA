@@ -5,6 +5,7 @@ plugins {
     kotlin("plugin.spring") version "1.9.24"
     kotlin("plugin.noarg") version "1.9.24"
     kotlin("plugin.allopen") version "1.9.24"
+    kotlin("plugin.jpa") version "1.9.22"
     kotlin("kapt") version "1.8.22"
 }
 
@@ -72,10 +73,10 @@ dependencies {
     implementation("com.google.code.gson:gson:2.8.9")
     testImplementation("com.google.code.gson:gson:2.8.9")
 
-
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.3")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.3")
+    runtimeOnly("com.h2database:h2")
 
 }
 
