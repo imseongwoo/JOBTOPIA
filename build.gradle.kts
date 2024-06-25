@@ -69,8 +69,8 @@ dependencies {
     testImplementation("io.mockk:mockk:$mockkVersion")
 //    testImplementation("org.postgresql:postgresql")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    implementation("com.google.code.gson:gson:2.8.8")
-    testImplementation("com.google.code.gson:gson:2.8.8")
+    implementation("com.google.code.gson:gson:2.8.9")
+    testImplementation("com.google.code.gson:gson:2.8.9")
 
 
     runtimeOnly("org.postgresql:postgresql")
