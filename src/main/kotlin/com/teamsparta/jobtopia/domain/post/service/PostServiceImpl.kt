@@ -117,6 +117,7 @@ class PostServiceImpl(
         reactionService.deleteReaction(post, null)
         post.files?.let { s3Service.delete(it.split("m/")[1]) }
         post.deletedAt = LocalDateTime.now()
+        deleteOldSoftDeletedPosts()
     }
 
     @Scheduled(fixedDelay = 600000)
