@@ -1,8 +1,10 @@
 package com.teamsparta.jobtopia.infra.s3.service
 
 
+import com.amazonaws.HttpMethod
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.CannedAccessControlList
+import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest
 import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.services.s3.model.PutObjectRequest
 import com.amazonaws.util.IOUtils
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.ByteArrayInputStream
 import java.io.IOException
+import java.net.URL
 import java.util.*
 
 
@@ -60,6 +63,20 @@ class S3Service(
             throw IllegalArgumentException("Invalid extension: $extension")
         }
         return fileName.substring(extensionIndex + 1)
+    }
+
+    fun generatePreSignedUrl(objectKey: String): String {
+        val expiration = Date()
+        expiration.time += EXPIRE_PERIOD
+        val generatePreSignedUrlRequest: GeneratePresignedUrlRequest = GeneratePresignedUrlRequest(bucket, objectKey)
+            .withMethod(HttpMethod.PUT)
+            .withExpiration(expiration)
+        val url: URL = amazonS3Client.generatePresignedUrl(generatePreSignedUrlRequest)
+        return url.toString()
+    }
+
+    companion object {
+        const val EXPIRE_PERIOD = 1000 * 60 * 5
     }
 
 }
