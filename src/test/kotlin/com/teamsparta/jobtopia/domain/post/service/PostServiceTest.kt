@@ -13,62 +13,64 @@ import com.teamsparta.jobtopia.domain.users.repository.UserRepository
 import com.teamsparta.jobtopia.infra.s3.service.S3Service
 import com.teamsparta.jobtopia.infra.security.UserPrincipal
 import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.shouldBe
-import io.mockk.clearAllMocks
 import io.mockk.every
-import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
-import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.boot.test.context.SpringBootTest
+import io.mockk.slot
+import org.junit.jupiter.api.Test
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.core.Authentication
 import java.time.LocalDateTime
+import java.util.*
 
-@SpringBootTest
-@ExtendWith(MockKExtension::class)
-class PostServiceTest : BehaviorSpec({
-    extension(SpringExtension)
-
-    afterContainer {
-        clearAllMocks()
-    }
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+class PostServiceTest {
     val postRepository = mockk<PostRepository>()
     val userRepository = mockk<UserRepository>()
     val reactionService = mockk<ReactionService>()
     val followRepository = mockk<FollowRepository>()
     val s3Service = mockk<S3Service>()
-
     val postService = PostServiceImpl(postRepository, userRepository, reactionService, followRepository, s3Service)
 
-    Given("Post가 삭제되었을 때") {
-        When("특정 Post를 요청하면") {
-            Then("ModelNotFoundException이 발생해야 한다.") {
-                val postId = 53L
-                every { postRepository.findByIdOrNull(postId)?.isDeleted } returns true
+    @Test
+    fun `should throw ModelNotFoundException when requesting a deleted post`() {
+        val postId = 53L
+        every { postRepository.findById(postId) } returns Optional.of(
+            Post(
+                title = "title1",
+                content = "content1",
+                users = Users(
+                    userName = "user",
+                    password = "password",
+                    profile = Profile(nickname = "nickname", description = "description")
+                ),
+                updatedAt = LocalDateTime.now(),
+                deletedAt = LocalDateTime.now(),
+                isDeleted = true,
+                files = ""
+            ).apply { id = postId }
+        )
 
-                shouldThrow<ModelNotFoundException> {
-                    postService.getPostById(postId)
-                }
-            }
+        shouldThrow<ModelNotFoundException> {
+            postService.getPostById(postId)
         }
     }
 
-    Given("Post가 존재하지 않을 때") {
-        When("특정 Post를 요청하면") {
-            Then("ModelNotFoundException이 발생해야 한다.") {
-                val postId = 1L
-                every { postRepository.findByIdOrNull(any()) } returns null
+    @Test
+    fun `should throw ModelNotFoundException when requesting a non-existent post`() {
+        val postId = 1L
+        every { postRepository.findByIdOrNull(postId) } returns null
 
-                shouldThrow<ModelNotFoundException> {
-                    postService.getPostById(postId)
-                }
-            }
+        shouldThrow<ModelNotFoundException> {
+            postService.getPostById(postId)
         }
     }
 
-    Given("유효한 PostRequest가 주어졌을 때") {
+    @Test
+    fun `should return PostResponse when creating a new post with valid PostRequest`() {
         val postRequest = PostRequest("New Title", "New Content")
         val authentication = mockk<Authentication>()
         val userPrincipal = UserPrincipal(
@@ -83,23 +85,19 @@ class PostServiceTest : BehaviorSpec({
         every { authentication.principal } returns userPrincipal
         every { userRepository.findByIdOrNull(userPrincipal.id) } returns user
 
-        When("새로운 Post를 생성하면") {
-            Then("PostResponse가 반환되어야 한다.") {
-                val post = Post(
-                    title = postRequest.title,
-                    content = postRequest.content,
-                    files = null,
-                    users = user
-                ).apply { id = 1L }
-
-                val postResponse = PostResponse(1L, "New Title", "New Content", null, LocalDateTime.now(), false)
-
-                every { postRepository.save(any<Post>()) } returns post
-
-                val result = postService.createPost(postRequest, authentication, null)
-                result shouldBe postResponse
-            }
+        val postSlot = slot<Post>()
+        every { postRepository.save(capture(postSlot)) } answers {
+            postSlot.captured.apply { id = 1L }
         }
-    }
 
-})
+
+        val postResponse = PostResponse(1L, "New Title", "New Content", null, LocalDateTime.now(), false)
+
+        val result = postService.createPost(postRequest, authentication, null)
+        result.id shouldBe postResponse.id
+        result.title shouldBe postResponse.title
+        result.content shouldBe postResponse.content
+        result.file shouldBe postResponse.file
+        result.isDeleted shouldBe postResponse.isDeleted
+    }
+}
