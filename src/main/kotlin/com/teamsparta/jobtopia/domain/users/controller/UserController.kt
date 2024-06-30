@@ -2,6 +2,7 @@ package com.teamsparta.jobtopia.domain.users.controller
 
 import com.teamsparta.jobtopia.domain.users.dto.*
 import com.teamsparta.jobtopia.domain.users.service.UserService
+import com.teamsparta.jobtopia.infra.aop.LogExecutionTime
 import com.teamsparta.jobtopia.infra.security.UserPrincipal
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
@@ -24,6 +25,7 @@ class UserController(
             .body(userService.signUp(signUpRequest))
     }
 
+    @LogExecutionTime
     @PostMapping("/login")
     fun signIn(@RequestBody loginRequest: LoginRequest): ResponseEntity<LoginResponse> {
         return ResponseEntity

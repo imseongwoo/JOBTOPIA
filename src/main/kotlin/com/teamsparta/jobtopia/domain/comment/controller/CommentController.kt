@@ -5,6 +5,7 @@ import com.teamsparta.jobtopia.domain.comment.dto.CommentModifyDTO
 import com.teamsparta.jobtopia.domain.comment.dto.CommentPostDTO
 import com.teamsparta.jobtopia.domain.comment.service.CommentService
 import com.teamsparta.jobtopia.domain.reaction.service.ReactionService
+import com.teamsparta.jobtopia.infra.aop.LogExecutionTime
 import com.teamsparta.jobtopia.infra.security.UserPrincipal
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.*
 class CommentController(
     private val commentService: CommentService
 ) {
-
+    @LogExecutionTime
     @GetMapping
     fun getCommentList(@PathVariable postId: Long): ResponseEntity<List<CommentDTO>> {
         return ResponseEntity.status(HttpStatus.OK)

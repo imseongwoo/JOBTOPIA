@@ -3,6 +3,7 @@ package com.teamsparta.jobtopia.domain.post.controller
 import com.teamsparta.jobtopia.domain.post.dto.GetPostResponse
 import com.teamsparta.jobtopia.domain.post.dto.PostRequest
 import com.teamsparta.jobtopia.domain.post.dto.PostResponse
+import com.teamsparta.jobtopia.domain.post.dto.PostSearchRequest
 import com.teamsparta.jobtopia.domain.post.service.PostService
 import com.teamsparta.jobtopia.infra.s3.service.S3Service
 import com.teamsparta.jobtopia.infra.security.UserPrincipal
@@ -11,8 +12,8 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.Authentication
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
@@ -103,5 +104,23 @@ class PostController(
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(followPostList.content)
+    }
+
+    @GetMapping("/keyword")
+    fun getPostListByKeyword(
+        @PageableDefault pageable: Pageable,
+        postSearchRequest: PostSearchRequest?
+    ):ResponseEntity<Page<GetPostResponse>>{
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(postService.getPostListByKeyword(pageable, postSearchRequest))
+    }
+
+    @PostMapping("/{videoName}/url")
+    fun getPreSignedUrl(
+        @PathVariable videoName: String,
+        @AuthenticationPrincipal principal: UserPrincipal
+    ): String {
+        return s3Service.generatePreSignedUrl("presigned/${videoName}")
     }
 }

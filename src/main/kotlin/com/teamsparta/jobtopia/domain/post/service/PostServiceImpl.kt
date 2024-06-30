@@ -6,6 +6,7 @@ import com.teamsparta.jobtopia.domain.follow.repository.FollowRepository
 import com.teamsparta.jobtopia.domain.post.dto.GetPostResponse
 import com.teamsparta.jobtopia.domain.post.dto.PostRequest
 import com.teamsparta.jobtopia.domain.post.dto.PostResponse
+import com.teamsparta.jobtopia.domain.post.dto.PostSearchRequest
 import com.teamsparta.jobtopia.domain.post.model.Post
 import com.teamsparta.jobtopia.domain.post.model.toResponse
 import com.teamsparta.jobtopia.domain.post.repository.PostRepository
@@ -18,6 +19,7 @@ import com.teamsparta.jobtopia.infra.security.UserPrincipal
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -114,9 +116,21 @@ class PostServiceImpl(
         post.softDeleted()
         reactionService.deleteReaction(post, null)
         post.files?.let { s3Service.delete(it.split("m/")[1]) }
-
         post.deletedAt = LocalDateTime.now()
     }
+
+    @Scheduled(fixedDelay = 600000)
+    @Transactional
+    fun deleteOldSoftDeletedPosts() {
+        val threshold = LocalDateTime.now().minusMinutes(10)
+        val oldPosts = postRepository.findOldSoftDeletedPosts(threshold)
+
+        oldPosts.forEach { post ->
+            post.files?.let { s3Service.delete(it.split("m/")[1]) }
+            postRepository.delete(post)
+        }
+    }
+
 
     override fun postLikeReaction(postId: Long, userId: Long) {
         val post = postRepository.findByIdOrNull(postId) ?: throw ModelNotFoundException("Post", postId)
@@ -134,8 +148,13 @@ class PostServiceImpl(
 
     override fun getFollowingUserPostList(pageable: Pageable, userId: Long): Page<GetPostResponse> {
         val followingResult = followRepository.findAllByUserId(userId)
-        val result = postRepository.findAllByManyUserId(followingResult.map { it.followingUserId }, pageable)
+        val result = postRepository.getFollowingUserPosts(followingResult.map { it.followingUserId }, pageable)
 
+        return result.map { GetPostResponse.from(it) }
+    }
+
+    override fun getPostListByKeyword(pageable: Pageable, postSearchRequest: PostSearchRequest?): Page<GetPostResponse> {
+        val result = postRepository.searchPostsByKeyword(postSearchRequest, pageable)
         return result.map { GetPostResponse.from(it) }
     }
 }
