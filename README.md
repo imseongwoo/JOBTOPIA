@@ -20,19 +20,13 @@ https://youtu.be/s5kgFvTUCXY
 
 ## 📈 기능 상세
 
-- **게시물, 댓글 CRUD 기능**
+- **QueryDsl을 사용한 키워드 검색 기능**
   
-- **사용자 인증/인가 기능**
+- **Paging 처리**
 
-- **소셜 로그인 기능 구현**
-    - [참고]https://github.com/jobtopia/JOBTOPIA/issues/24)
-      
-- **유저 팔로잉**
+- **테스트 코드**
 
-- **게시글 및 댓글 좋아요/싫어요**
-
-- **게시물 멀티미디어**
-
+- **presigned url활용 이미지 업로드**
 
 
 ## 환경설정
